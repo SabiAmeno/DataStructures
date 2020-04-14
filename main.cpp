@@ -4,6 +4,7 @@
 #include <stack>
 #include <cassert>
 #include "btree_inc.h"
+#include "rbtree_inc.h"
 #include "queue_inc.h"
 
 template<typename C, typename T>
@@ -132,6 +133,20 @@ void treeTest()
     btree.remove(34);
     btree.remove(45);
     btree.remove(1);
+
+    RedBTree<int> rbtree;
+    rbtree.insert(11);
+    rbtree.insert(2);
+    rbtree.insert(14);
+    rbtree.insert(15);
+    rbtree.insert(1);
+    rbtree.insert(7);
+    rbtree.insert(5);
+    rbtree.insert(4);
+    rbtree.insert(8);
+    rbtree.insert(19);
+    rbtree.insert(12);
+    rbtree.insert(33);
 }
 
 int main()

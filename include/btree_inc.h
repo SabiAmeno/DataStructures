@@ -15,22 +15,22 @@
 **********************************************/
 
 template<typename Type>
-struct Node
+struct BstNode
 {
     Type data;
 
-    Node* parent;
-    Node* left;
-    Node* right;
+    BstNode* P;
+    BstNode* L;
+    BstNode* R;
 };
 
-template<typename ValType>
+template<typename ValType, template<typename T> typename Node = BstNode>
 class BinST
 {
 public:
     BinST() : _root(nullptr){}
 
-    ~BinST()
+    virtual ~BinST()
     {
         if (_root)
         {
@@ -38,22 +38,9 @@ public:
         }
     }
 
-    void insert(const ValType& val)
+    virtual void insert(const ValType& val)
     {
-        Node<ValType>* newNode = new Node<ValType>();
-        newNode->data = val;
-
-        if (!_root)
-            _root = newNode;
-        else {
-            //此处查找到的p一定存在
-            Node<ValType>* p = _find(val);
-            if (p->data > val)
-                p->left = newNode;
-            else
-                p->right = newNode;
-            newNode->parent = p;
-        }
+        _insert(val);
     }
 
     /*
@@ -64,23 +51,24 @@ public:
         a. 若x为node的右孩子，直接将x替换node即可；
         b. 若x不是node的右孩子，首先使用x.right替换x，再将x移到node的右孩子位置，最后回到情况 a。
     */
-    void remove(Node<ValType>* node)
+    virtual void remove(Node<ValType>* node)
     {
-        if (!node->left) {
-            _translate(node, node->right);
-        } else if(!node->right) {
-            _translate(node, node->left);
+        if (!node->L) {
+            _translate(node, node->R);
+        } else if(!node->R) {
+            _translate(node, node->L);
         } else {
-            Node<ValType>* right = _minimum(node->right);
-            if (node->right != right) {
-                _translate(right, right->right);
-                right->right = node->right;
-                right->right->parent = right;
+            Node<ValType>* R = _minimum(node->R);
+            if (node->R != R) {
+                _translate(R, R->R);
+                R->R = node->R;
+                R->R->P = R;
             }
-            _translate(node, right);
-            right->left = node->left;
-            right->left->parent = right;
+            _translate(node, R);
+            R->L = node->L;
+            R->L->P = R;
         }
+        delete node;
     }
 
     void remove(ValType val)
@@ -96,8 +84,8 @@ public:
         if (node)
         {
             oss << node->data;
-            preorder_traval(node->left, oss);
-            preorder_traval(node->right, oss);
+            preorder_traval(node->L, oss);
+            preorder_traval(node->R, oss);
         }
     }
 
@@ -106,9 +94,9 @@ public:
     {
         if (node)
         {
-            inorder_traval(node->left, oss);
+            inorder_traval(node->L, oss);
             oss << node->data;
-            inorder_traval(node->right, oss);
+            inorder_traval(node->R, oss);
         }
     }
 
@@ -117,8 +105,8 @@ public:
     {
         if (node)
         {
-            postorder_traval(node->left, oss);
-            postorder_traval(node->right, oss);
+            postorder_traval(node->L, oss);
+            postorder_traval(node->R, oss);
             oss << node->data;
         }
     }
@@ -131,10 +119,10 @@ public:
             if (val == tmp->data)
                 break;
             if (val < tmp->data) {
-                tmp = tmp->left;
+                tmp = tmp->L;
             }
             else {
-                tmp = tmp->right;
+                tmp = tmp->R;
             }
         }
 
@@ -157,14 +145,14 @@ public:
     */
     Node<ValType>* predecessor(Node<ValType>* node)
     {
-        if (node->left)
-            return _maximum(node->left);
+        if (node->L)
+            return _maximum(node->L);
 
-        Node<ValType>* tmp = node->parent;
+        Node<ValType>* tmp = node->P;
 
-        while (tmp && node == tmp->left) {
+        while (tmp && node == tmp->L) {
             node = tmp;
-            tmp = tmp->parent;
+            tmp = tmp->P;
         }
 
         return tmp;
@@ -175,19 +163,19 @@ public:
     */
     Node<ValType>* successor(Node<ValType>* node)
     {
-        if(node->right) 
-            return _minimum(node->right);
+        if(node->R) 
+            return _minimum(node->R);
         
-        Node<ValType>* tmp = node->parent;
+        Node<ValType>* tmp = node->P;
 
-        while (tmp && node == tmp->right) {
+        while (tmp && node == tmp->R) {
             node = tmp;
-            tmp = tmp->parent;
+            tmp = tmp->P;
         }
 
         return tmp;
     }
-private:
+protected:
     Node<ValType>* _find(const ValType& val)
     {
         Node<ValType>* tmp = _root;
@@ -196,31 +184,51 @@ private:
         while (tmp) {
             pre = tmp;
             if (val < tmp->data) {
-                tmp = tmp->left;
+                tmp = tmp->L;
             } else {
-                tmp = tmp->right;
+                tmp = tmp->R;
             }
         }
 
         return pre;
     }
 
-    void _destroy(Node<ValType>* node)
+    virtual void _destroy(Node<ValType>* node)
     {
         if (!node)
             return;
-        _destroy(node->left);
-        _destroy(node->right);
+        _destroy(node->L);
+        _destroy(node->R);
 
         delete node;
+    }
+
+    Node<ValType>* _insert(const ValType& val)
+    {
+        Node<ValType>* newNode = new Node<ValType>();
+        newNode->data = val;
+
+        if (!_root)
+            _root = newNode;
+        else {
+            //此处查找到的p一定存在
+            Node<ValType>* p = _find(val);
+            if (p->data > val)
+                p->L = newNode;
+            else
+                p->R = newNode;
+            newNode->P = p;
+        }
+
+        return newNode;
     }
 
     Node<ValType>* _minimum(Node<ValType>* node)
     {
         Node<ValType>* tmp = node;
 
-        while (tmp->left)
-            tmp = tmp->left;
+        while (tmp->L)
+            tmp = tmp->L;
 
         return tmp;
     }
@@ -229,28 +237,28 @@ private:
     {
         Node<ValType>* tmp = node;
 
-        while (tmp->right)
-            tmp = tmp->right;
+        while (tmp->R)
+            tmp = tmp->R;
 
         return tmp;
     }
 
     void _translate(Node<ValType>* u, Node<ValType>* v)
     {
-        Node<ValType>* p = u->parent;
+        Node<ValType>* p = u->P;
         if (p)
         {
-            if (u == p->left)
-                p->left = v;
+            if (u == p->L)
+                p->L = v;
             else
-                p->right = v;
+                p->R = v;
         } else {
             _root = v;
         }
         if (v)
-            v->parent = nullptr;
+            v->P = nullptr;
     }
-private:
+protected:
     Node<ValType>* _root;
 };
 
