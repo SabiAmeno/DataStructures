@@ -83,6 +83,10 @@ public:
     void clear() {
         m_size = 0;
     }
+
+    bool is_empty() const {
+        return m_size == 0;
+    }
 private:
     int    m_size;
     int    m_capacity;
@@ -186,6 +190,10 @@ public:
             return nullptr;
 
         return tmp;
+    }
+
+    bool is_empty() const {
+        return m_size == 0;
     }
 protected:
     int             m_size;

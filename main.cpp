@@ -113,6 +113,40 @@ void testQueue()
     assert(queue.is_empty());
 }
 
+template<typename Type, typename T>
+void treePrint(const T& tree)
+{
+    if (tree.is_empty())
+        return;
+
+    T::NS* node = nullptr;
+    T::Nodes nodes;
+    Queue<T::NS*> deffered;
+
+    tree.children(nodes, node);
+    deffered.enqueue(nodes.find(0)->data);
+    deffered.enqueue(0);
+    std::cout << nodes.find(0)->data->data << std::endl;
+
+    while (!deffered.is_empty()) {
+        T::NS* topn = deffered.front();
+        deffered.dequeue();
+        if (!topn) {
+            std::cout << std::endl;
+            continue;
+        }
+        tree.children(nodes, topn);
+
+        if (!nodes.is_empty()) {
+            for (int i = 0; i < nodes.size(); ++i) {
+                deffered.enqueue(nodes.find(i)->data);
+                std::cout << nodes.find(i)->data->data << " ";
+            }
+            deffered.enqueue(nullptr);
+        }
+    }
+}
+
 void treeTest()
 {
     BinST<int> btree;
@@ -139,7 +173,11 @@ void treeTest()
     for (int i = 0; i < 13; ++i)
         rbtree.insert(vals[i]);
 
-    rbtree.remove(19);
+    treePrint<int, RedBTree<int>>(rbtree);
+
+    for (int i = 0; i < 13; ++i) {
+        rbtree.remove(vals[i]);
+    }
 }
 
 int main()

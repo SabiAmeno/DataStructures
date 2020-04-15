@@ -2,6 +2,7 @@
 #define _BTREE_INC_H_
 
 #include <iostream>
+#include "list_inc.h"
 
 #define ds_delete(d) {delete d;d = nullptr;}
 
@@ -29,6 +30,9 @@ struct BstNode
 template<typename ValType, template<typename T> typename Node = BstNode>
 class BinST
 {
+public:
+    using NS = typename Node<ValType>;
+    using Nodes = DNSeqList<Node<ValType>*>;
 public:
     BinST() : _root(nullptr){}
 
@@ -177,6 +181,22 @@ public:
 
         return tmp;
     }
+
+    void children(Nodes& nodes, Node<ValType>* p = nullptr) const {
+        nodes.clear();
+
+        if (!p) {
+            nodes.push_back(_root);
+        } else {
+            if (p->L) nodes.push_back(p->L);
+            if (p->R) nodes.push_back(p->R);
+        }
+    }
+    
+    bool is_empty() const {
+        return _root == nullptr;
+    }
+
 protected:
     Node<ValType>* _find(const ValType& val)
     {
@@ -258,7 +278,7 @@ protected:
             _root = v;
         }
         if (v)
-            v->P = 0;
+            v->P = u->P;
     }
 protected:
     Node<ValType>* _root;

@@ -50,6 +50,7 @@ struct RBNode
 #define isRED(u) (NodeColor::NC_RED == (u)->color)
 #define isBLK(u) (NodeColor::NC_BLACK == (u)->color)
 
+#define getCLR(u) (u)->color
 #define setCLR(u, c) (u)->color = (c)
 #define setRED(u) setCLR(u, NodeColor::NC_RED)
 #define setBLK(u) setCLR(u, NodeColor::NC_BLACK)
@@ -76,7 +77,7 @@ public:
     {
         Node<ValType>* y = node;
         //记录删除的节点或者在树内部移动的节点的颜色，若是黑色，则需要进行调整
-        NodeColor old_y_color = y->color;
+        NodeColor old_y_color = getCLR(y);
         Node<ValType>* x = nullptr;
 
         if (!node->L) {
@@ -87,7 +88,7 @@ public:
             _translate(node, node->L);
         } else {
             Node<ValType>* y = _minimum(node->R);
-            old_y_color = y->color;
+            old_y_color = getCLR(y);
             x = y->R;
             if(y->P != node) {
                 _translate(y, y->R);
@@ -97,7 +98,7 @@ public:
             _translate(node, y);
             setL(y, node->L);
             setLP(y, y);
-            setCLR(y, node->color);
+            setCLR(y, getCLR(node));
         }
 
         ds_delete(node);
@@ -165,9 +166,70 @@ private:
         setBLK(_root);
     }
 
-    void _remove_fixup(Node<ValType>* z)
+    void _remove_fixup(Node<ValType>* x)
     {
+        if (!x) return;
 
+        while (x != _root && isBLK(x)) {
+            if(isL(x)){
+                Node<ValType>* w = x->P->R;
+                //1. x的兄弟节点 w 是红色的
+                // 将x的父节点染成红色，将 w 染成黑色
+                // 将x父节点进行左旋
+                if (isRED(w)) {
+                    setRED(x->P);
+                    setBLK(w);
+                    _rotateL(x->P);
+                    w = x->P->R;
+                }
+                //2. x的兄弟节点 w 
+                if (isBLK(w) && isBLK(w->L) && isBLK(w->R)) {
+                    setRED(w);
+                    x = x->P;
+                } else {
+                    if (isRED(w->L)) {
+                        setRED(w);
+                        setBLK(w->L);
+                        _rotateR(w);
+                        w = x->P->R;
+                    }
+                    setCLR(w, getCLR(x->P));
+                    setBLK(x->P);
+                    setBLK(w->P);
+                    _rotateL(x->P);
+                    x = _root;
+                }
+            } else {
+                Node<ValType>* w = x->P->L;
+                //1. x的兄弟节点 w 是红色的
+                // 将x的父节点染成红色，将 w 染成黑色
+                // 将x父节点进行左旋
+                if (isRED(w)) {
+                    setRED(x->P);
+                    setBLK(w);
+                    _rotateR(x->P);
+                    w = x->P->L;
+                }
+                //2. x的兄弟节点 w 
+                if (isBLK(w) && isBLK(w->L) && isBLK(w->R)) {
+                    setRED(w);
+                    x = x->P;
+                } else {
+                    if (isRED(w->R)) {
+                        setRED(w);
+                        setBLK(w->R);
+                        _rotateR(w);
+                        w = x->P->L;
+                    }
+                    setCLR(w, getCLR(x->P));
+                    setBLK(x->P);
+                    setBLK(w->P);
+                    _rotateR(x->P);
+                    x = _root;
+                }
+            }
+        }
+        setBLK(x);
     }
 
     void _rotateL(Node<ValType>* z)
