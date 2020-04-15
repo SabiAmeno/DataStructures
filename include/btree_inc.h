@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#define ds_delete(d) {delete d;d = nullptr;}
+
 /**********************************************
 二叉搜索树特点：
     对于任何节点x，x左边的数值都不大于x节点值，x右边的数值不小于x节点值。
@@ -68,7 +70,7 @@ public:
             R->L = node->L;
             R->L->P = R;
         }
-        delete node;
+        ds_delete(node);
     }
 
     void remove(ValType val)
@@ -200,7 +202,7 @@ protected:
         _destroy(node->L);
         _destroy(node->R);
 
-        delete node;
+        ds_delete(node);
     }
 
     Node<ValType>* _insert(const ValType& val)
@@ -256,7 +258,7 @@ protected:
             _root = v;
         }
         if (v)
-            v->P = nullptr;
+            v->P = 0;
     }
 protected:
     Node<ValType>* _root;

@@ -3,6 +3,17 @@
 
 #include "btree_inc.h"
 
+
+/*****************************************
+红黑树性质：
+    1. 每个节点是黑色或红色
+    2. 根节点是黑色的
+    3. 每个叶节点是黑色的
+    4. 如果一个节点是红色的，则它的两个子节点都是黑色的
+    5. 每个节点到任意子节点简单路径上，均包含相同数目的黑色节点
+
+
+******************************************/
 enum class NodeColor
 {
     NC_RED,
@@ -33,11 +44,15 @@ struct RBNode
 
 #define setPL(u, v) (u)->P->L = (v) 
 #define setPR(u, v) (u)->P->R = (v)
+#define setRP(u, v) (u)->R->P = (v)
+#define setLP(u, v) (u)->L->P = (v)
 
-#define isRED(z) (NodeColor::NC_RED == (z)->color)
-#define isBLK(z) (NodeColor::NC_BLACK == (z)->color)
-#define setRED(z) (z)->color = NodeColor::NC_RED
-#define setBLK(z) (z)->color = NodeColor::NC_BLACK
+#define isRED(u) (NodeColor::NC_RED == (u)->color)
+#define isBLK(u) (NodeColor::NC_BLACK == (u)->color)
+
+#define setCLR(u, c) (u)->color = (c)
+#define setRED(u) setCLR(u, NodeColor::NC_RED)
+#define setBLK(u) setCLR(u, NodeColor::NC_BLACK)
 
 template<typename ValType, template<typename T> typename Node = RBNode>
 class RedBTree : public BinST<ValType, Node>
@@ -50,9 +65,45 @@ public:
         _insert_fixup(nnode);
     }
 
+    virtual void remove(ValType val)
+    {
+        Node<ValType>* node = search(val);
+        if (node)
+            remove(node);
+    }
+
     virtual void remove(Node<ValType>* node)
     {
-        
+        Node<ValType>* y = node;
+        //记录删除的节点或者在树内部移动的节点的颜色，若是黑色，则需要进行调整
+        NodeColor old_y_color = y->color;
+        Node<ValType>* x = nullptr;
+
+        if (!node->L) {
+            x = node->R;
+            _translate(node, node->R);
+        } else if(!node->R) {
+            x = node->L;
+            _translate(node, node->L);
+        } else {
+            Node<ValType>* y = _minimum(node->R);
+            old_y_color = y->color;
+            x = y->R;
+            if(y->P != node) {
+                _translate(y, y->R);
+                setR(y, node->R);
+                setRP(y, y);
+            }
+            _translate(node, y);
+            setL(y, node->L);
+            setLP(y, y);
+            setCLR(y, node->color);
+        }
+
+        ds_delete(node);
+
+        if (NodeColor::NC_BLACK == old_y_color)
+            _remove_fixup(x);
     }
 
 private:
@@ -60,17 +111,17 @@ private:
     {
         //直到z的父节点不为红色为止
         while (z->P && isRED(z->P)) {
-            Node<ValType>* p = z->P;
-            Node<ValType>* pp = p->P;
-
-            if (p == pp->L) {
+            if (isL(z->P)) {
+                Node<ValType>* y = z->P->P->R;
                 //1. z父节点的兄弟节点不存在或者是红色的
-                if ((pp->R && isRED(pp->R)) || !pp->R) {
-                    setBLK(p);
-                    if(pp->R)
-                        setBLK(pp->R);
-                    setRED(pp);
-                    z = pp;
+                // 此时为了保证红黑树性质4不被破坏，需要对父节点和叔父节点重新染成黑色，
+                // 而将曾父节点染成红色，并将当前节点设为曾父节点，并开始下一轮的修复
+                if ((y && isRED(y))) {
+                    setBLK(z->P);
+                    if(y)
+                        setBLK(y);
+                    setRED(z->P->P);
+                    z = z->P->P;
                 } else {
                     //2. z是父节点的右子节点
                     if (isR(z)) {
@@ -87,12 +138,13 @@ private:
                     }
                 }
             } else {
-                if ((pp->L && isRED(pp->L)) || !pp->L) {
-                    setBLK(p);
-                    if(pp->L)
-                        setBLK(pp->L);
-                    setRED(pp);
-                    z = pp;
+                Node<ValType>* y = z->P->P->L;
+                if ((y && isRED(y))) {
+                    setBLK(z->P);
+                    if (y)
+                        setBLK(y);
+                    setRED(z->P->P);
+                    z = z->P->P;
                 } else {
                     if (isL(z)) {
                         z = z->P;
@@ -108,7 +160,7 @@ private:
                 }
             }
         }
-        while (_root->P)
+        if (_root->P)
             _root = _root->P;
         setBLK(_root);
     }

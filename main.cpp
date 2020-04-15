@@ -135,18 +135,11 @@ void treeTest()
     btree.remove(1);
 
     RedBTree<int> rbtree;
-    rbtree.insert(11);
-    rbtree.insert(2);
-    rbtree.insert(14);
-    rbtree.insert(15);
-    rbtree.insert(1);
-    rbtree.insert(7);
-    rbtree.insert(5);
-    rbtree.insert(4);
-    rbtree.insert(8);
-    rbtree.insert(19);
-    rbtree.insert(12);
-    rbtree.insert(33);
+    int vals[] = { 11, 2, 14, 15, 1, 7, 5, 4, 8, 19, 12, 18, 33 };
+    for (int i = 0; i < 13; ++i)
+        rbtree.insert(vals[i]);
+
+    rbtree.remove(19);
 }
 
 int main()
