@@ -22,9 +22,9 @@ struct BstNode
 {
     Type data;
 
-    BstNode* P;
-    BstNode* L;
-    BstNode* R;
+    BstNode* P; //父节点
+    BstNode* L; //左子节点
+    BstNode* R; //右子节点
 };
 
 template<typename ValType, template<typename T> typename Node = BstNode>
